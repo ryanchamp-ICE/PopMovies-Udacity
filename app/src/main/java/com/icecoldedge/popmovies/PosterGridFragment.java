@@ -2,14 +2,24 @@ package com.icecoldedge.popmovies;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 
+import org.json.JSONException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 
@@ -56,6 +66,12 @@ public class PosterGridFragment extends Fragment {
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        refreshMovieData();
     }
 
     @Override
@@ -130,4 +146,101 @@ public class PosterGridFragment extends Fragment {
 //        // TODO: Update argument type and name
 //        void onFragmentInteraction(Uri uri);
 //    }
+
+    public void refreshMovieData() {
+        new FetchMoviesTask().execute("popular");
+    }
+
+    public class FetchMoviesTask extends AsyncTask<String, Void, String[]> {
+
+        private final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/movie/popular";
+        private final String API_KEY_PARAM = "api_key";
+        private final String POSTER_SIZE = "w185";
+
+        @Override
+        protected String[] doInBackground(String... searchType) {
+//            if (searchType.length == 0)
+//                return null;
+
+            String movieJsonStr = FetchMovieDataFromAPI("popular");
+
+            if (movieJsonStr != null) {
+                Log.v(LOG_TAG, movieJsonStr);
+            }
+
+            // TODO: Parse JSON from API Call
+//            String[] movieData;
+//            try {
+//                movieDa
+//            }
+//            catch(JSONException e) {
+//                Log.e(LOG_TAG, "Error", e);
+//                movieData = null;
+//            }
+
+            return new String[0];
+        }
+
+        private String BuildMovieUrl(String searchType) {
+            //TODO: Switch API based on searchType
+            Uri movieUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                    .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
+                    .build();
+
+            return movieUri.toString();
+        }
+
+        private String FetchMovieDataFromAPI(String searchType) {
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+
+            String movieJsonStr = null;
+            try {
+                URL url = new URL(BuildMovieUrl(searchType));
+
+                urlConnection = (HttpURLConnection)url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    movieJsonStr = null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while((line = reader.readLine()) != null) {
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    movieJsonStr = null;
+                }
+
+                movieJsonStr = buffer.toString();
+            }
+            catch (IOException e)
+            {
+                Log.e(LOG_TAG, "Error ", e);
+                movieJsonStr = null;
+            }
+            finally {
+                if(urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+
+                if(reader != null) {
+                    try {
+                        reader.close();
+                    }
+                    catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+
+            return movieJsonStr;
+        }
+    }
 }
