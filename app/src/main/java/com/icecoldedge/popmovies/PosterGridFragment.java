@@ -1,6 +1,8 @@
 package com.icecoldedge.popmovies;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -163,8 +165,10 @@ public class PosterGridFragment extends Fragment {
 
             mPosterAdapter.clear();
 
-            for (String s: movieData) {
-                mPosterAdapter.add(s);
+            if (movieData != null) {
+                for (String s : movieData) {
+                    mPosterAdapter.add(s);
+                }
             }
         }
 
@@ -173,14 +177,20 @@ public class PosterGridFragment extends Fragment {
 //            if (searchType.length == 0)
 //                return null;
 
-            String movieJsonStr = FetchMovieDataFromAPI("popular");
+            String[] movieData = null;
+            String movieJsonStr = null;
+
+            if(!isOnline())
+                return movieData;
+
+            movieJsonStr = FetchMovieDataFromAPI("popular");
 
             if (movieJsonStr != null) {
                 Log.v(LOG_TAG, movieJsonStr);
             }
 
             // TODO: Parse JSON from API Call
-            String[] movieData;
+
             try {
                 movieData = getPosterUrlsFromJSON(movieJsonStr);
             }
@@ -190,6 +200,13 @@ public class PosterGridFragment extends Fragment {
             }
 
             return movieData;
+        }
+
+        private boolean isOnline() {
+            ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            NetworkInfo netInfo = cm.getActiveNetworkInfo();
+            return netInfo != null && netInfo.isConnectedOrConnecting();
         }
 
         private String BuildMovieUrl(String searchType) {
