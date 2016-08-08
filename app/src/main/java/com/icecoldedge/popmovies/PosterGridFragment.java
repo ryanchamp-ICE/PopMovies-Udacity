@@ -12,7 +12,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -97,10 +99,9 @@ public class PosterGridFragment extends Fragment {
             dummyList.add(i, Integer.toString(i));
         }
 
-        mPosterAdapter = new ArrayAdapter<String>(getActivity(),
+        mPosterAdapter = new PicassoImageAdapter(getActivity(),
                 R.layout.list_item_poster,
-                R.id.list_item_poster_textview,
-                dummyList);
+                new ArrayList<String>());
 
         GridView posterGrid = (GridView)rootView.findViewById(R.id.gridview_posters);
         posterGrid.setAdapter(mPosterAdapter);
@@ -155,7 +156,17 @@ public class PosterGridFragment extends Fragment {
 
         private final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/movie/popular";
         private final String API_KEY_PARAM = "api_key";
-        private final String POSTER_SIZE = "w185";
+
+        @Override
+        protected void onPostExecute(String[] movieData) {
+            super.onPostExecute(movieData);
+
+            mPosterAdapter.clear();
+
+            for (String s: movieData) {
+                mPosterAdapter.add(s);
+            }
+        }
 
         @Override
         protected String[] doInBackground(String... searchType) {
@@ -169,16 +180,16 @@ public class PosterGridFragment extends Fragment {
             }
 
             // TODO: Parse JSON from API Call
-//            String[] movieData;
-//            try {
-//                movieDa
-//            }
-//            catch(JSONException e) {
-//                Log.e(LOG_TAG, "Error", e);
-//                movieData = null;
-//            }
+            String[] movieData;
+            try {
+                movieData = getPosterUrlsFromJSON(movieJsonStr);
+            }
+            catch(JSONException e) {
+                Log.e(LOG_TAG, "Error", e);
+                movieData = null;
+            }
 
-            return new String[0];
+            return movieData;
         }
 
         private String BuildMovieUrl(String searchType) {
@@ -241,6 +252,29 @@ public class PosterGridFragment extends Fragment {
             }
 
             return movieJsonStr;
+        }
+
+        private String[] getPosterUrlsFromJSON(String movieJsonStr)
+            throws JSONException {
+
+            final String MDB_RESULTS = "results";
+            final String MDB_POSTER_PATH = "poster_path";
+            final int NUM_POSTERS = 16;
+
+            String[] resultStrs = new String[NUM_POSTERS];
+            if (movieJsonStr == null) {
+                Log.v(LOG_TAG, "Empty JSON String");
+            }
+
+            JSONObject movieJson = new JSONObject(movieJsonStr);
+            JSONArray movieArray = movieJson.getJSONArray(MDB_RESULTS);
+
+            for (int i = 0; i < movieArray.length() && i < NUM_POSTERS; i++) {
+                JSONObject movie = movieArray.getJSONObject(i);
+                resultStrs[i] = Movie.POSTER_BASE_URL + Movie.POSTER_SIZE + movie.getString(MDB_POSTER_PATH);
+            }
+
+            return resultStrs;
         }
     }
 }
