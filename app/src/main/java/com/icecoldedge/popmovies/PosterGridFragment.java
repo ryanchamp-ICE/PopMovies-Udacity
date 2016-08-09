@@ -1,11 +1,13 @@
 package com.icecoldedge.popmovies;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -72,12 +74,17 @@ public class PosterGridFragment extends Fragment {
     }
 
     public void refreshMovieData() {
-        new FetchMoviesTask().execute("popular");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        String sortOrderKey = getString(R.string.pref_sort_order_key);
+        String defaultSort = getString(R.string.pref_sort_order_default);
+
+        new FetchMoviesTask().execute(prefs.getString(sortOrderKey, defaultSort));
     }
 
     public class FetchMoviesTask extends AsyncTask<String, Void, String[]> {
 
-        private final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/movie/popular";
+        private final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/movie/";
         private final String API_KEY_PARAM = "api_key";
 
         @Override
@@ -95,8 +102,8 @@ public class PosterGridFragment extends Fragment {
 
         @Override
         protected String[] doInBackground(String... searchType) {
-//            if (searchType.length == 0)
-//                return null;
+            if (searchType.length == 0)
+                return null;
 
             String[] movieData = null;
             String movieJsonStr = null;
@@ -104,14 +111,13 @@ public class PosterGridFragment extends Fragment {
             if(!isOnline())
                 return movieData;
 
-            movieJsonStr = FetchMovieDataFromAPI("popular");
+            movieJsonStr = FetchMovieDataFromAPI(searchType[0]);
 
             if (movieJsonStr != null) {
                 Log.v(LOG_TAG, movieJsonStr);
             }
 
             // TODO: Parse JSON from API Call
-
             try {
                 movieData = getPosterUrlsFromJSON(movieJsonStr);
             }
@@ -133,6 +139,7 @@ public class PosterGridFragment extends Fragment {
         private String BuildMovieUrl(String searchType) {
             //TODO: Switch API based on searchType
             Uri movieUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                    .appendPath(searchType)
                     .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
 
