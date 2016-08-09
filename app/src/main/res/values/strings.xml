@@ -1,6 +1,16 @@
 <resources>
     <string name="app_name">PopMovies</string>
+    <string name="action_settings">Settings</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="pref_sort_order_label">Sort Order</string>
+    <string name="pref_sort_order_key">order</string>
+    <string name="pref_sort_order_default">popular</string>
+    <string-array name="pref_sort_order_entries">
+        <item>Most Popular</item>
+        <item>Top Rated</item>
+    </string-array>
+    <string-array name="pref_sort_order_values">
+        <item>popular</item>
+        <item>top_rated</item>
+    </string-array>
 </resources>
