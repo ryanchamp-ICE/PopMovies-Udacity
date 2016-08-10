@@ -16,18 +16,18 @@ import java.util.List;
 /**
  * Created by rchamp on 8/8/2016.
  */
-public class PicassoImageAdapter extends ArrayAdapter<String> {
+public class PicassoImageAdapter extends ArrayAdapter<Movie> {
     private Context mContext;
 
-    public PicassoImageAdapter(Context c, int resourceID, List<String> imagePaths) {
-        super(c, resourceID, imagePaths);
+    public PicassoImageAdapter(Context c, int resourceID, List<Movie> movieList) {
+        super(c, resourceID, movieList);
         mContext = c;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ImageView imageView;
-        String url = (String)getItem(position);
+        Movie movie = (Movie)getItem(position);
 
         LayoutInflater inflater = (LayoutInflater)mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         if (convertView == null) {
@@ -36,7 +36,7 @@ public class PicassoImageAdapter extends ArrayAdapter<String> {
 
         imageView = (ImageView)convertView.findViewById(R.id.list_item_poster_imageview);
 
-        Picasso.with(mContext).load(url).into(imageView);
+        Picasso.with(mContext).load(movie.getPosterPath()).into(imageView);
 
         return imageView;
     }

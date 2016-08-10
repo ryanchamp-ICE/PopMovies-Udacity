@@ -26,13 +26,21 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class PosterGridFragment extends Fragment {
 
     private final String LOG_TAG = PosterGridFragment.class.getSimpleName();
-    public ArrayAdapter<String> mPosterAdapter;
+    private ArrayAdapter<Movie> mPosterAdapter;
+
+
+    private Movie[] mMovieArray;
+    private ArrayList<Movie> mMovieList;
 
     public PosterGridFragment() {
         // Required empty public constructor
@@ -47,8 +55,21 @@ public class PosterGridFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // TODO: Settings menu for poster grid sort
-        //setHasOptionsMenu(true);
+
+        if (mMovieArray != null) {
+            if (savedInstanceState == null || !savedInstanceState.containsKey("movies")) {
+                mMovieList = new ArrayList<Movie>(Arrays.asList(mMovieArray));
+            }
+            else {
+                mMovieList = savedInstanceState.getParcelableArrayList("movies");
+            }
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList("movies", mMovieList);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -57,15 +78,9 @@ public class PosterGridFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_poster_grid, container, false);
 
-        ArrayList<String> dummyList = new ArrayList<String>();
-
-        for (int i = 0; i < 10; i++) {
-            dummyList.add(i, Integer.toString(i));
-        }
-
         mPosterAdapter = new PicassoImageAdapter(getActivity(),
                 R.layout.list_item_poster,
-                new ArrayList<String>());
+                new ArrayList<Movie>());
 
         GridView posterGrid = (GridView)rootView.findViewById(R.id.gridview_posters);
         posterGrid.setAdapter(mPosterAdapter);
@@ -82,30 +97,31 @@ public class PosterGridFragment extends Fragment {
         new FetchMoviesTask().execute(prefs.getString(sortOrderKey, defaultSort));
     }
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, String[]> {
+    public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
 
         private final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/movie/";
         private final String API_KEY_PARAM = "api_key";
 
         @Override
-        protected void onPostExecute(String[] movieData) {
+        protected void onPostExecute(Movie[] movieData) {
             super.onPostExecute(movieData);
 
-            mPosterAdapter.clear();
-
             if (movieData != null) {
-                for (String s : movieData) {
-                    mPosterAdapter.add(s);
+                mPosterAdapter.clear();
+                mMovieArray = movieData;
+
+                for (Movie m : mMovieArray) {
+                    mPosterAdapter.add(m);
                 }
             }
         }
 
         @Override
-        protected String[] doInBackground(String... searchType) {
+        protected Movie[] doInBackground(String... searchType) {
             if (searchType.length == 0)
                 return null;
 
-            String[] movieData = null;
+            Movie[] movieData = null;
             String movieJsonStr = null;
 
             if(!isOnline())
@@ -119,7 +135,7 @@ public class PosterGridFragment extends Fragment {
 
             // TODO: Parse JSON from API Call
             try {
-                movieData = getPosterUrlsFromJSON(movieJsonStr);
+                movieData = getMoviesFromJSON(movieJsonStr);
             }
             catch(JSONException e) {
                 Log.e(LOG_TAG, "Error", e);
@@ -137,7 +153,6 @@ public class PosterGridFragment extends Fragment {
         }
 
         private String BuildMovieUrl(String searchType) {
-            //TODO: Switch API based on searchType
             Uri movieUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                     .appendPath(searchType)
                     .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
@@ -199,14 +214,18 @@ public class PosterGridFragment extends Fragment {
             return movieJsonStr;
         }
 
-        private String[] getPosterUrlsFromJSON(String movieJsonStr)
+        private Movie[] getMoviesFromJSON(String movieJsonStr)
             throws JSONException {
 
             final String MDB_RESULTS = "results";
+            final String MDB_ID = "id";
+            final String MDB_TITLE = "original_title";
             final String MDB_POSTER_PATH = "poster_path";
+            final String MDB_SYNOPSIS = "overview";
+            final String MDB_RELEASE_DATE = "release_date";
             final int NUM_POSTERS = 16;
 
-            String[] resultStrs = new String[NUM_POSTERS];
+            Movie[] resultMovies = new Movie[NUM_POSTERS];
             if (movieJsonStr == null) {
                 Log.v(LOG_TAG, "Empty JSON String");
             }
@@ -216,10 +235,24 @@ public class PosterGridFragment extends Fragment {
 
             for (int i = 0; i < movieArray.length() && i < NUM_POSTERS; i++) {
                 JSONObject movie = movieArray.getJSONObject(i);
-                resultStrs[i] = Movie.POSTER_BASE_URL + Movie.POSTER_SIZE + movie.getString(MDB_POSTER_PATH);
+                resultMovies[i] = new Movie();
+                resultMovies[i].setMovieId(movie.getInt(MDB_ID));
+                resultMovies[i].setTitle(movie.getString(MDB_TITLE));
+                resultMovies[i].setPosterPath(Movie.POSTER_BASE_URL + Movie.POSTER_SIZE + movie.getString(MDB_POSTER_PATH));
+                resultMovies[i].setSynopsis(movie.getString(MDB_SYNOPSIS));
+
+                DateFormat format = new SimpleDateFormat("yyyy-mm-dd");
+
+                try {
+                    resultMovies[i].setReleaseDate(format.parse(movie.getString(MDB_RELEASE_DATE)));
+                }
+                catch (ParseException e) {
+                    Log.e(LOG_TAG, "Error ", e);
+                    resultMovies[i].setReleaseDate(null);
+                }
             }
 
-            return resultStrs;
+            return resultMovies;
         }
     }
 }
