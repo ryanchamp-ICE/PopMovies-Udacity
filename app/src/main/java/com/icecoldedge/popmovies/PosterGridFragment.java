@@ -40,8 +40,6 @@ public class PosterGridFragment extends Fragment {
     private final String LOG_TAG = PosterGridFragment.class.getSimpleName();
     private ArrayAdapter<Movie> mPosterAdapter;
 
-
-    private Movie[] mMovieArray;
     private ArrayList<Movie> mMovieList;
 
     public PosterGridFragment() {
@@ -58,13 +56,11 @@ public class PosterGridFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (mMovieArray != null) {
-            if (savedInstanceState == null || !savedInstanceState.containsKey("movies")) {
-                mMovieList = new ArrayList<Movie>(Arrays.asList(mMovieArray));
-            }
-            else {
-                mMovieList = savedInstanceState.getParcelableArrayList("movies");
-            }
+        if (savedInstanceState == null || !savedInstanceState.containsKey("movies")) {
+            mMovieList = new ArrayList<Movie>();
+        }
+        else {
+            mMovieList = savedInstanceState.getParcelableArrayList("movies");
         }
     }
 
@@ -114,31 +110,29 @@ public class PosterGridFragment extends Fragment {
         new FetchMoviesTask().execute(prefs.getString(sortOrderKey, defaultSort));
     }
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
+    public class FetchMoviesTask extends AsyncTask<String, Void, ArrayList<Movie>> {
 
         private final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/movie/";
         private final String API_KEY_PARAM = "api_key";
 
         @Override
-        protected void onPostExecute(Movie[] movieData) {
+        protected void onPostExecute(ArrayList<Movie> movieData) {
             super.onPostExecute(movieData);
 
             if (movieData != null) {
                 mPosterAdapter.clear();
-                mMovieArray = movieData;
+                mMovieList = movieData;
 
-                for (Movie m : mMovieArray) {
-                    mPosterAdapter.add(m);
-                }
+                mPosterAdapter.addAll(mMovieList);
             }
         }
 
         @Override
-        protected Movie[] doInBackground(String... searchType) {
+        protected ArrayList<Movie> doInBackground(String... searchType) {
             if (searchType.length == 0)
                 return null;
 
-            Movie[] movieData = null;
+            ArrayList<Movie> movieData = null;
             String movieJsonStr = null;
 
             if(!isOnline())
@@ -231,7 +225,7 @@ public class PosterGridFragment extends Fragment {
             return movieJsonStr;
         }
 
-        private Movie[] getMoviesFromJSON(String movieJsonStr)
+        private ArrayList<Movie> getMoviesFromJSON(String movieJsonStr)
             throws JSONException {
 
             final String MDB_RESULTS = "results";
@@ -243,7 +237,7 @@ public class PosterGridFragment extends Fragment {
             final String MDB_RELEASE_DATE = "release_date";
             final int NUM_POSTERS = 16;
 
-            Movie[] resultMovies = new Movie[NUM_POSTERS];
+            ArrayList<Movie> results = new ArrayList<Movie>();
             if (movieJsonStr == null) {
                 Log.v(LOG_TAG, "Empty JSON String");
             }
@@ -251,27 +245,29 @@ public class PosterGridFragment extends Fragment {
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieArray = movieJson.getJSONArray(MDB_RESULTS);
 
-            for (int i = 0; i < movieArray.length() && i < NUM_POSTERS; i++) {
+            for (int i = 0; i < movieArray.length(); i++) {
                 JSONObject movie = movieArray.getJSONObject(i);
-                resultMovies[i] = new Movie();
-                resultMovies[i].setMovieId(movie.getInt(MDB_ID));
-                resultMovies[i].setTitle(movie.getString(MDB_TITLE));
-                resultMovies[i].setPosterPath(Movie.POSTER_BASE_URL + Movie.POSTER_SIZE + movie.getString(MDB_POSTER_PATH));
-                resultMovies[i].setSynopsis(movie.getString(MDB_SYNOPSIS));
-                resultMovies[i].setRating((float)movie.getDouble(MDB_RATING));
+                Movie result = new Movie();
+                result.setMovieId(movie.getInt(MDB_ID));
+                result.setTitle(movie.getString(MDB_TITLE));
+                result.setPosterPath(Movie.POSTER_BASE_URL + Movie.POSTER_SIZE + movie.getString(MDB_POSTER_PATH));
+                result.setSynopsis(movie.getString(MDB_SYNOPSIS));
+                result.setRating((float)movie.getDouble(MDB_RATING));
 
                 DateFormat format = new SimpleDateFormat("yyyy-mm-dd");
 
                 try {
-                    resultMovies[i].setReleaseDate(format.parse(movie.getString(MDB_RELEASE_DATE)));
+                    result.setReleaseDate(format.parse(movie.getString(MDB_RELEASE_DATE)));
                 }
                 catch (ParseException e) {
                     Log.e(LOG_TAG, "Error ", e);
-                    resultMovies[i].setReleaseDate(null);
+                    result.setReleaseDate(null);
                 }
+
+                results.add(result);
             }
 
-            return resultMovies;
+            return results;
         }
     }
 }
