@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        tools:context="com.icecoldedge.popmovies.DetailActivity">
+
+        <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="@dimen/detail_poster_thumbnail_width" android:layout_height="@dimen/detail_poster_thumbnail_height"
+            android:id="@+id/detail_poster_thumbnail"
+            android:minHeight="?android:attr/listPreferredItemHeight"
+            android:gravity="center">
+        </ImageView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingTop="50dp"
+            android:paddingLeft="@dimen/activity_horizontal_margin">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:id="@+id/detail_title_textview"
+                android:text="Title Here"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:id="@+id/detail_sysnopsis_textview"
+                android:text="Synopsis Here"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:id="@+id/detail_rating_textview"
+                android:text="Rating Here"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:id="@+id/detail_release_date_textview"
+                android:text="Release Date Here"/>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
+

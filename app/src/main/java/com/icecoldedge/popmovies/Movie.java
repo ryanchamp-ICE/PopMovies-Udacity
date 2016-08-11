@@ -54,7 +54,7 @@ public class Movie implements Parcelable {
         dest.writeLong(getReleaseDate().getTime());
     }
 
-    Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
+    static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
         @Override
         public Movie createFromParcel(Parcel parcel) {
             return new Movie(parcel);

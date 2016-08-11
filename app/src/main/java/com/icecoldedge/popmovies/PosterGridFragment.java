@@ -1,6 +1,7 @@
 package com.icecoldedge.popmovies;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 
@@ -84,6 +86,21 @@ public class PosterGridFragment extends Fragment {
 
         GridView posterGrid = (GridView)rootView.findViewById(R.id.gridview_posters);
         posterGrid.setAdapter(mPosterAdapter);
+
+        posterGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Movie movie = (Movie)adapterView.getItemAtPosition(i);
+                if (movie != null) {
+                    Context context = getActivity().getApplicationContext();
+                    Intent detailIntent = new Intent(context, DetailActivity.class);
+                    detailIntent.putExtra("movie", movie);
+                    startActivity(detailIntent);
+                } else {
+                    Log.v(LOG_TAG, "Movie data not found");
+                }
+            }
+        });
 
         return rootView;
     }
@@ -222,6 +239,7 @@ public class PosterGridFragment extends Fragment {
             final String MDB_TITLE = "original_title";
             final String MDB_POSTER_PATH = "poster_path";
             final String MDB_SYNOPSIS = "overview";
+            final String MDB_RATING = "vote_average";
             final String MDB_RELEASE_DATE = "release_date";
             final int NUM_POSTERS = 16;
 
@@ -240,6 +258,7 @@ public class PosterGridFragment extends Fragment {
                 resultMovies[i].setTitle(movie.getString(MDB_TITLE));
                 resultMovies[i].setPosterPath(Movie.POSTER_BASE_URL + Movie.POSTER_SIZE + movie.getString(MDB_POSTER_PATH));
                 resultMovies[i].setSynopsis(movie.getString(MDB_SYNOPSIS));
+                resultMovies[i].setRating((float)movie.getDouble(MDB_RATING));
 
                 DateFormat format = new SimpleDateFormat("yyyy-mm-dd");
 
